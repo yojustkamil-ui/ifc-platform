@@ -9,8 +9,15 @@ const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
 // Routes
 const authRoutes = require('./routes/auth');
 const playerRoutes = require('./routes/players');
+const playerEnhancedRoutes = require('./routes/players.enhanced');
 const teamRoutes = require('./routes/teams');
 const leagueRoutes = require('./routes/leagues');
+const matchRoutes = require('./routes/matches');
+const statisticsRoutes = require('./routes/statistics');
+const newsRoutes = require('./routes/news');
+const valuationRoutes = require('./routes/valuation');
+const predictionRoutes = require('./routes/predictions');
+const searchRoutes = require('./routes/search');
 
 dotenv.config();
 
@@ -43,8 +50,15 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/players', playerRoutes);
+app.use('/api/player', playerEnhancedRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/leagues', leagueRoutes);
+app.use('/api/matches', matchRoutes);
+app.use('/api/statistics', statisticsRoutes);
+app.use('/api/news', newsRoutes);
+app.use('/api/valuation', valuationRoutes);
+app.use('/api/predictions', predictionRoutes);
+app.use('/api/search', searchRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
