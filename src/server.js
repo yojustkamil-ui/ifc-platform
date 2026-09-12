@@ -18,6 +18,11 @@ const newsRoutes = require('./routes/news');
 const valuationRoutes = require('./routes/valuation');
 const predictionRoutes = require('./routes/predictions');
 const searchRoutes = require('./routes/search');
+const heroCardsRoutes = require('./routes/herocards');
+const ratingRoutes = require('./routes/rating');
+const cardProgressionRoutes = require('./routes/cardprogression');
+const recordsRoutes = require('./routes/records');
+const comparisonRoutes = require('./routes/comparison');
 
 dotenv.config();
 
@@ -59,6 +64,11 @@ app.use('/api/news', newsRoutes);
 app.use('/api/valuation', valuationRoutes);
 app.use('/api/predictions', predictionRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/hero-cards', heroCardsRoutes);
+app.use('/api/rating', ratingRoutes);
+app.use('/api/cards', cardProgressionRoutes);
+app.use('/api/records', recordsRoutes);
+app.use('/api/compare', comparisonRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
