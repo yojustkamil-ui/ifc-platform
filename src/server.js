@@ -27,6 +27,10 @@ const contractsRoutes = require('./routes/contracts');
 const freeAgentsRoutes = require('./routes/freeagents');
 const transfersRoutes = require('./routes/transfers');
 const loansRoutes = require('./routes/loans');
+const lineupsRoutes = require('./routes/lineups');
+const reportsRoutes = require('./routes/reports');
+const headToHeadRoutes = require('./routes/headtohead');
+const predictionAccuracyRoutes = require('./routes/prediction-accuracy');
 
 dotenv.config();
 
@@ -77,6 +81,10 @@ app.use('/api/contracts', contractsRoutes);
 app.use('/api/free-agents', freeAgentsRoutes);
 app.use('/api/transfers', transfersRoutes);
 app.use('/api/loans', loansRoutes);
+app.use('/api/match', lineupsRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/h2h', headToHeadRoutes);
+app.use('/api/accuracy', predictionAccuracyRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -92,6 +100,6 @@ app.listen(PORT, () => {
   console.log(`\n🚀 IFC Platform Backend Started`);
   console.log(`📋 API: http://localhost:${PORT}`);
   console.log(`🔐 Discord OAuth: Configured`);
-  console.log(`🎯 Discord Role Verification: Enabled`);
-  console.log(`⚽ Database: Connected\n`);
+  console.log(`🎭 Discord Role Verification: Enabled`);
+  console.log(`⚽ Match System: Active\n`);
 });
