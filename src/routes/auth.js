@@ -6,7 +6,7 @@ const { generateAccessToken, generateRefreshToken } = require('../utils/tokenMan
 const logger = require('../config/logger');
 const router = express.Router();
 
-// Discord OAuth2 Callback
+// Discord OAuth2 Callback with Discord Role Verification
 router.get('/discord/callback', async (req, res) => {
   const { code } = req.query;
 
@@ -39,6 +39,28 @@ router.get('/discord/callback', async (req, res) => {
     const discordUser = userResponse.data;
     const { id: discord_id, username, avatar, email } = discordUser;
 
+    // Check if user has "Website Organizer" role in Discord server
+    let isWebsiteOrganizer = false;
+    let discordRoles = [];
+
+    try {
+      // Get guild member info
+      const memberResponse = await axios.get(
+        `https://discord.com/api/users/@me/guilds/${process.env.DISCORD_GUILD_ID}/member`,
+        { headers: { Authorization: `Bearer ${access_token}` } }
+      );
+
+      discordRoles = memberResponse.data.roles || [];
+
+      // Check for "Website Organizer" role
+      if (discordRoles.includes(process.env.DISCORD_WEBSITE_ORGANIZER_ROLE_ID)) {
+        isWebsiteOrganizer = true;
+      }
+    } catch (error) {
+      logger.warn(`Failed to verify Discord role for user ${discord_id}:`, error.message);
+      // User not in server - they can still create account but won't have organizer permissions
+    }
+
     // Find or create user in IFC database
     const result = await pool.query(
       'SELECT * FROM users WHERE discord_id = $1',
@@ -48,16 +70,19 @@ router.get('/discord/callback', async (req, res) => {
     let user;
     if (result.rows.length > 0) {
       user = result.rows[0];
-      // Update avatar
+      // Update user info and role verification
       await pool.query(
-        'UPDATE users SET avatar = $1, last_login = NOW() WHERE discord_id = $2',
-        [avatar, discord_id]
+        `UPDATE users SET avatar = $1, is_website_organizer = $2, discord_roles = $3, last_login = NOW() 
+         WHERE discord_id = $4`,
+        [avatar, isWebsiteOrganizer, JSON.stringify(discordRoles), discord_id]
       );
     } else {
       // Create new user
       const createResult = await pool.query(
-        'INSERT INTO users (discord_id, username, email, avatar, role, account_status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [discord_id, username, email, avatar, 'user', 'active']
+        `INSERT INTO users (discord_id, username, email, avatar, role, account_status, is_website_organizer, discord_roles)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+         RETURNING *`,
+        [discord_id, username, email, avatar, isWebsiteOrganizer ? 'staff' : 'user', 'active', isWebsiteOrganizer, JSON.stringify(discordRoles)]
       );
       user = createResult.rows[0];
     }
@@ -69,12 +94,13 @@ router.get('/discord/callback', async (req, res) => {
     );
 
     user.permissions = permResult.rows.map(r => r.permission);
+    user.is_website_organizer = isWebsiteOrganizer;
 
     // Generate tokens
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
-    logger.info(`User ${user.id} authenticated via Discord`);
+    logger.info(`User ${user.id} authenticated via Discord | Website Organizer: ${isWebsiteOrganizer}`);
 
     // Redirect to frontend with tokens
     const frontendUrl = new URL(process.env.FRONTEND_URL);
@@ -82,6 +108,7 @@ router.get('/discord/callback', async (req, res) => {
     frontendUrl.searchParams.append('refreshToken', refreshToken);
     frontendUrl.searchParams.append('userId', user.id);
     frontendUrl.searchParams.append('role', user.role);
+    frontendUrl.searchParams.append('isWebsiteOrganizer', isWebsiteOrganizer);
 
     res.redirect(frontendUrl.toString());
   } catch (error) {
